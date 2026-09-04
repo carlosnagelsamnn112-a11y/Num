@@ -1,0 +1,17 @@
+{
+  "name": "num-server",
+  "version": "1.0.0",
+  "description": "NUM server (Express + Socket.io)",
+  "private": true,
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=16"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "socket.io": "^4.7.5"
+  }
+}
