@@ -79,7 +79,7 @@ export default function App() {
     socket.on('guess:correct', ({ number, attemptsLeft }) => {
       setMyNumber(number);
       setAttemptsLeft(attemptsLeft);
-      setFeedback({ type: 'correct', message: `Correct! Your number is ${number}` });
+      setFeedback({ type: 'correct', message: `¡Correcto! Tu número era ${number}` });
     });
 
     socket.on('guess:wrong', ({ attemptsLeft, message }) => {
@@ -145,7 +145,7 @@ export default function App() {
   const handleGuess = () => {
     const num = parseInt(guessInput, 10);
     if (isNaN(num) || guessInput.trim() === '') {
-      setFeedback({ type: 'error', message: 'Enter a valid number' });
+      setFeedback({ type: 'error', message: 'Ingresa un número válido' });
       return;
     }
     setFeedback(null);
@@ -226,41 +226,41 @@ function HomeView({ onCreate, onJoin, error, setError }) {
   const [digits, setDigits] = useState(3);
 
   const handleCreate = () => {
-    if (!username.trim()) { setError('Enter a username'); return; }
+    if (!username.trim()) { setError('Ingresa un nombre de usuario'); return; }
     onCreate(username.trim(), digits);
   };
 
   const handleJoinRoom = () => {
-    if (!username.trim()) { setError('Enter a username'); return; }
-    if (!roomCode.trim()) { setError('Enter a room code'); return; }
+    if (!username.trim()) { setError('Ingresa un nombre de usuario'); return; }
+    if (!roomCode.trim()) { setError('Ingresa el código de la sala'); return; }
     onJoin(username.trim(), roomCode.trim());
   };
 
   return (
     <div className="view home">
       <div className="home-content">
-        <h1 className="logo">NUM</h1>
-        <p className="tagline">Guess your number before anyone else</p>
+        <h1 className="logo">NUM<span className="logo-dot">.</span></h1>
+        <p className="tagline">Adivina tu número antes que los demás</p>
 
         {error && <div className="error-msg">{error}</div>}
 
         {!mode && (
           <div className="menu-buttons">
             <button className="btn btn-primary" onClick={() => setMode('create')}>
-              Create Room
+              Crear sala
             </button>
-            <button className="btn btn-secondary" onClick={() => setMode('join')}>
-              Join Room
+            <button className="btn btn-primary ghost" onClick={() => setMode('join')}>
+              Unirse a sala
             </button>
           </div>
         )}
 
         {mode === 'create' && (
           <div className="form-card">
-            <h2>Create Room</h2>
+            <h2>Nueva sala</h2>
             <input
               type="text"
-              placeholder="Username"
+              placeholder="Nombre de usuario"
               maxLength={15}
               value={username}
               onChange={e => setUsername(e.target.value)}
@@ -268,7 +268,7 @@ function HomeView({ onCreate, onJoin, error, setError }) {
               autoFocus
             />
             <div className="digits-select">
-              <label>Number of digits:</label>
+              <label>Cifras del número</label>
               <div className="digit-options">
                 {[2, 3, 4].map(d => (
                   <button
@@ -282,20 +282,20 @@ function HomeView({ onCreate, onJoin, error, setError }) {
               </div>
             </div>
             <button className="btn btn-primary" onClick={handleCreate}>
-              Create
+              Crear sala
             </button>
             <button className="btn btn-text" onClick={() => { setMode(null); setError(''); }}>
-              Back
+              ← Volver
             </button>
           </div>
         )}
 
         {mode === 'join' && (
           <div className="form-card">
-            <h2>Join Room</h2>
+            <h2>Unirse a sala</h2>
             <input
               type="text"
-              placeholder="Username"
+              placeholder="Nombre de usuario"
               maxLength={15}
               value={username}
               onChange={e => setUsername(e.target.value)}
@@ -303,17 +303,17 @@ function HomeView({ onCreate, onJoin, error, setError }) {
             />
             <input
               type="text"
-              placeholder="Room code (e.g. AB12)"
+              placeholder="Código de la sala (ej. AB12)"
               maxLength={4}
               value={roomCode}
               onChange={e => setRoomCode(e.target.value.toUpperCase())}
               onKeyDown={e => e.key === 'Enter' && handleJoinRoom()}
             />
             <button className="btn btn-primary" onClick={handleJoinRoom}>
-              Join
+              Ingresar
             </button>
             <button className="btn btn-text" onClick={() => { setMode(null); setError(''); }}>
-              Back
+              ← Volver
             </button>
           </div>
         )}
@@ -334,25 +334,27 @@ function RoomView({ room, playerId, onStart, onLeave }) {
     <div className="view room-view">
       <div className="room-card">
         <button className="btn btn-text leave-btn" onClick={onLeave}>
-          Leave
+          ← Salir
         </button>
-        <h2>Room</h2>
-        <div className="room-code-label">Share this code</div>
-        <div className="room-code">{room.roomId}</div>
+        <h2>Sala</h2>
+        <div className="room-code-label">Comparte este código</div>
+        <div className="room-code-frame">
+          <div className="room-code">{room.roomId}</div>
+        </div>
 
         <div className="room-config">
-          <span className="config-badge">{room.config.digits} digits</span>
-          <span className="config-badge">{room.players.length} player{room.players.length !== 1 ? 's' : ''}</span>
+          <span className="config-badge">{room.config.digits} cifras</span>
+          <span className="config-badge">{room.players.length} jugador{room.players.length !== 1 ? 'es' : ''}</span>
         </div>
 
         <div className="player-list">
-          <h3>Players</h3>
+          <h3>Jugadores</h3>
           {room.players.map(p => (
             <div key={p.id} className="player-item">
               <span className="player-dot" />
               <span className="player-name">{p.name}</span>
-              {p.id === playerId && <span className="you-tag">you</span>}
-              {p.id === room.players[0]?.id && <span className="host-tag">host</span>}
+              {p.id === playerId && <span className="you-tag">tú</span>}
+              {p.id === room.players[0]?.id && <span className="host-tag">anfitrión</span>}
             </div>
           ))}
         </div>
@@ -363,10 +365,10 @@ function RoomView({ room, playerId, onStart, onLeave }) {
             disabled={!canStart}
             onClick={onStart}
           >
-            {canStart ? 'Start Game' : `Need ${Math.max(0, 2 - room.players.length)} more`}
+            {canStart ? 'Iniciar juego' : `Faltan ${Math.max(0, 2 - room.players.length)} jugador${Math.max(0, 2 - room.players.length) !== 1 ? 'es' : ''} para iniciar`}
           </button>
         ) : (
-          <p className="waiting-text">Waiting for host to start...</p>
+          <p className="waiting-text">Esperando a que el anfitrión inicie…</p>
         )}
       </div>
     </div>
@@ -380,8 +382,10 @@ function RoomView({ room, playerId, onStart, onLeave }) {
 function CountdownScreen({ value }) {
   return (
     <div className="view countdown">
-      <div className={`countdown-number ${value === 0 ? 'go' : ''}`}>
-        {value > 0 ? value : 'GO!'}
+      <div className={`countdown-ring ${value === 0 ? 'go' : ''}`}>
+        <div className="countdown-number">
+          {value > 0 ? value : '¡YA!'}
+        </div>
       </div>
     </div>
   );
@@ -397,7 +401,7 @@ function GameView({ gameData, playerId, attemptsLeft, guessInput, setGuessInput,
   return (
     <div className="view game-view">
       <div className="game-header">
-        <div className="round-badge">Round {round}</div>
+        <div className="round-badge">RONDA {round}</div>
         <div className="scores-bar">
           {scores.map(s => (
             <div key={s.id} className={`score-chip ${s.id === playerId ? 'me' : ''}`}>
@@ -409,8 +413,9 @@ function GameView({ gameData, playerId, attemptsLeft, guessInput, setGuessInput,
 
       <div className="numbers-grid">
         <div className="number-card mine">
-          <div className="card-label">Your number</div>
-          <div className="card-number masked">???</div>
+          <div className="card-label">Tu número</div>
+          <div className="card-number masked">///</div>
+          <div className="card-hint">oculto</div>
         </div>
         {others.map(([id, data]) => (
           <div key={id} className="number-card other">
@@ -423,12 +428,13 @@ function GameView({ gameData, playerId, attemptsLeft, guessInput, setGuessInput,
       {myNumber !== null ? (
         <div className="game-result reveal">
           <div className="reveal-number">{myNumber}</div>
-          <p>That was your number!</p>
+          <p>Ese era tu número</p>
         </div>
       ) : (
         <div className="guess-section">
           <div className="attempts-display">
-            Attempts: {Array.from({ length: 3 }, (_, i) => (
+            Intentos&nbsp;
+            {Array.from({ length: 3 }, (_, i) => (
               <span key={i} className={`attempt-dot ${i < attemptsLeft ? 'filled' : 'empty'}`}>●</span>
             ))}
           </div>
@@ -441,18 +447,18 @@ function GameView({ gameData, playerId, attemptsLeft, guessInput, setGuessInput,
                 ref={inputRef}
                 type="number"
                 className="guess-input"
-                placeholder="Your guess..."
+                placeholder="Tu número..."
                 value={guessInput}
                 onChange={e => setGuessInput(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && onGuess()}
               />
               <button className="btn btn-primary" onClick={onGuess}>
-                Guess
+                Adivinar
               </button>
             </div>
           )}
           {attemptsLeft <= 0 && !feedback && (
-            <div className="feedback wrong">You ran out of attempts</div>
+            <div className="feedback wrong">Se te acabaron los intentos</div>
           )}
         </div>
       )}
@@ -470,22 +476,22 @@ function ResultsView({ result, playerId, gameOver, onPlayAgain, onNextRound, onL
   return (
     <div className="view results-view">
       <div className="results-card">
-        <h2>{gameOver ? 'Game Over' : 'Round Over'}</h2>
+        <h2>{gameOver ? 'Fin del juego' : 'Fin de la ronda'}</h2>
 
         {result.winnerId ? (
           <div className={`result-banner ${iWon ? 'won' : 'lost'}`}>
-            {iWon ? 'You guessed it!' : `${result.scores.find(s => s.id === result.winnerId)?.name} guessed correctly!`}
+            {iWon ? '¡Lo adivinaste!' : `¡${result.scores.find(s => s.id === result.winnerId)?.name} lo adivinó!`}
           </div>
         ) : (
-          <div className="result-banner nobody">Nobody guessed correctly</div>
+          <div className="result-banner nobody">Nadie adivinó su número</div>
         )}
 
         <div className="final-scores">
           {result.scores.sort((a, b) => b.score - a.score).map((s, i) => (
             <div key={s.id} className={`score-row ${s.id === playerId ? 'me' : ''} ${s.id === result.winnerId ? 'winner' : ''}`}>
               <span className="rank">#{i + 1}</span>
-              <span className="name">{s.name}{s.id === playerId ? ' (you)' : ''}</span>
-              <span className="score">{s.score} win{s.score !== 1 ? 's' : ''}</span>
+              <span className="name">{s.name}{s.id === playerId ? ' (tú)' : ''}</span>
+              <span className="score">{s.score} {s.score === 1 ? 'victoria' : 'victorias'}</span>
             </div>
           ))}
         </div>
@@ -493,13 +499,13 @@ function ResultsView({ result, playerId, gameOver, onPlayAgain, onNextRound, onL
         {gameOver ? (
           <div className="game-over-actions">
             <p className="champion-text">
-              {result.scores.find(s => s.score === Math.max(...result.scores.map(x => x.score)))?.name} wins the game!
+              ¡{result.scores.find(s => s.score === Math.max(...result.scores.map(x => x.score)))?.name} gana la partida!
             </p>
-            <button className="btn btn-primary" onClick={onPlayAgain}>Play Again</button>
-            <button className="btn btn-text" onClick={onLeave}>Leave</button>
+            <button className="btn btn-primary" onClick={onPlayAgain}>Jugar de nuevo</button>
+            <button className="btn btn-text" onClick={onLeave}>Salir de la sala</button>
           </div>
         ) : (
-          <button className="btn btn-primary" onClick={onNextRound}>Next Round</button>
+          <button className="btn btn-primary" onClick={onNextRound}>Siguiente ronda</button>
         )}
       </div>
     </div>

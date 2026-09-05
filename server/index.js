@@ -148,15 +148,15 @@ io.on('connection', (socket) => {
 
   socket.on('room:join', ({ roomId, username }) => {
     const room = getRoom(roomId);
-    if (!room) return socket.emit('room:error', { message: 'Room not found' });
+    if (!room) return socket.emit('room:error', { message: 'Sala no encontrada' });
     if (room.game?.state === 'playing') {
-      return socket.emit('room:error', { message: 'Game already in progress' });
+      return socket.emit('room:error', { message: 'La partida ya está en curso' });
     }
     if (room.players.length >= 8) {
-      return socket.emit('room:error', { message: 'Room is full (max 8)' });
+      return socket.emit('room:error', { message: 'La sala está llena (máx. 8)' });
     }
     if (room.players.find(p => p.name.toLowerCase() === username.toLowerCase())) {
-      return socket.emit('room:error', { message: 'Username already taken' });
+      return socket.emit('room:error', { message: 'Ese nombre de usuario ya está en uso' });
     }
     room.players.push({ id: socket.id, name: username, score: 0, connected: true });
     socket.join(roomId);
@@ -217,7 +217,7 @@ io.on('connection', (socket) => {
       const remaining = room.game.attemptsLeft[socket.id];
       io.to(socket.id).emit('guess:wrong', {
         attemptsLeft: remaining,
-        message: remaining === 0 ? 'No attempts left!' : 'Wrong number!',
+        message: remaining === 0 ? '¡Sin intentos restantes!' : '¡Número incorrecto!',
       });
       if (remaining === 0) {
         room.game.roundResults[socket.id] = 'loss';
@@ -297,7 +297,7 @@ io.on('connection', (socket) => {
       if (player) player.connected = false;
       const active = room.players.filter(p => p.connected);
       if (active.length < 2) {
-        io.to(roomId).emit('game:cancelled', { message: 'Game interrupted - not enough players' });
+        io.to(roomId).emit('game:cancelled', { message: 'Partida interrumpida, no hay suficientes jugadores' });
         room.players.forEach(p => { p.score = 0; });
         room.game = { state: 'waiting' };
       }
