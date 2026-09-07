@@ -165,6 +165,7 @@ export default function App() {
   const handlePlayAgain = () => {
     socket.emit('game:reset');
     resetGameState();
+    setView('room');
   };
 
   return (

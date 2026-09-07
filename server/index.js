@@ -57,8 +57,8 @@ function cleanUpRoom(roomId) {
 }
 
 function initGame(room) {
-  const count = room.players.length;
-  const numbers = generateNumbers(count, room.config.digits);
+  const active = room.players.filter(p => p.connected);
+  const numbers = generateNumbers(active.length, room.config.digits);
   room.game = {
     state: 'playing',
     numbers: {},
@@ -68,11 +68,39 @@ function initGame(room) {
     roundWinner: null,
     roundOverEmitted: false,
   };
-  room.players.forEach((p, i) => {
+  active.forEach((p, i) => {
     room.game.numbers[p.id] = numbers[i];
     room.game.attemptsLeft[p.id] = 3;
     room.game.roundResults[p.id] = null;
   });
+}
+
+function startRound(roomId) {
+  const room = getRoom(roomId);
+  if (!room) return;
+  if (room.game?.state === 'countdown' || room.game?.state === 'playing') return;
+  if (room.players.filter(p => p.connected).length < 2) return;
+  const currentRound = room.game?.currentRound || 0;
+  room.game = { state: 'countdown', currentRound };
+  io.to(roomId).emit('game:countdown');
+  setTimeout(() => {
+    const current = getRoom(roomId);
+    if (!current || !current.game || current.game.state !== 'countdown') return;
+    initGame(current);
+    current.players.forEach(p => {
+      if (!p.connected) return;
+      const nums = {};
+      current.players.forEach(op => {
+        if (op.id !== p.id && op.connected) nums[op.id] = { name: op.name, number: current.game.numbers[op.id] };
+      });
+      io.to(p.id).emit('game:start', {
+        numbers: nums,
+        attemptsLeft: 3,
+        round: current.game.currentRound,
+        scores: current.players.map(pl => ({ id: pl.id, name: pl.name, score: pl.score })),
+      });
+    });
+  }, 3500);
 }
 
 function emitRoomState(roomId) {
@@ -104,7 +132,7 @@ function endRound(roomId, winnerId) {
   });
   const maxScore = Math.max(...room.players.map(p => p.score));
   const gameOver = maxScore >= 3;
-  if (gameOver) room.game.state = 'gameover';
+  room.game.state = gameOver ? 'gameover' : 'roundover';
   const numbersMap = {};
   room.players.forEach(p => { numbersMap[p.id] = room.game.numbers[p.id]; });
   io.to(roomId).emit('round:over', {
@@ -175,26 +203,7 @@ io.on('connection', (socket) => {
   socket.on('game:start', () => {
     const info = getPlayerRoom(socket.id);
     if (!info) return;
-    const { roomId, room } = info;
-    if (room.players.length < 2) return;
-    if (room.game?.state === 'playing') return;
-    room.game = { state: 'countdown' };
-    io.to(roomId).emit('game:countdown');
-    setTimeout(() => {
-      initGame(room);
-      room.players.forEach(p => {
-        const nums = {};
-        room.players.forEach(op => {
-          if (op.id !== p.id) nums[op.id] = { name: op.name, number: room.game.numbers[op.id] };
-        });
-        io.to(p.id).emit('game:start', {
-          numbers: nums,
-          attemptsLeft: 3,
-          round: room.game.currentRound,
-          scores: room.players.map(pl => ({ id: pl.id, name: pl.name, score: pl.score })),
-        });
-      });
-    }, 3500);
+    startRound(info.roomId);
   });
 
   socket.on('game:guess', ({ guess }) => {
@@ -237,38 +246,8 @@ io.on('connection', (socket) => {
     const info = getPlayerRoom(socket.id);
     if (!info) return;
     const { roomId, room } = info;
-    if (!room.game || room.game.state !== 'gameover') return;
-    const maxScore = Math.max(...room.players.filter(p => p.connected).map(p => p.score));
-    if (maxScore >= 3) return;
-    const count = room.players.filter(p => p.connected).length;
-    const numbers = generateNumbers(count, room.config.digits);
-    const active = room.players.filter(p => p.connected);
-    room.game = {
-      state: 'playing',
-      numbers: {},
-      attemptsLeft: {},
-      currentRound: (room.game?.currentRound || 0) + 1,
-      roundResults: {},
-      roundWinner: null,
-      roundOverEmitted: false,
-    };
-    active.forEach((p, i) => {
-      room.game.numbers[p.id] = numbers[i];
-      room.game.attemptsLeft[p.id] = 3;
-      room.game.roundResults[p.id] = null;
-    });
-    active.forEach(p => {
-      const nums = {};
-      active.forEach(op => {
-        if (op.id !== p.id) nums[op.id] = { name: op.name, number: room.game.numbers[op.id] };
-      });
-      io.to(p.id).emit('game:start', {
-        numbers: nums,
-        attemptsLeft: 3,
-        round: room.game.currentRound,
-        scores: room.players.map(pl => ({ id: pl.id, name: pl.name, score: pl.score })),
-      });
-    });
+    if (!room.game || room.game.state !== 'roundover') return;
+    startRound(roomId);
   });
 
   socket.on('game:reset', () => {
