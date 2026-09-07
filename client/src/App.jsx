@@ -206,6 +206,7 @@ export default function App() {
         <ResultsView
           result={roundResult}
           playerId={playerId}
+          isCreator={room?.players?.[0]?.id === playerId}
           gameOver={gameOver}
           onPlayAgain={handlePlayAgain}
           onNextRound={handleNextRound}
@@ -471,7 +472,7 @@ function GameView({ gameData, playerId, attemptsLeft, guessInput, setGuessInput,
    RESULTS VIEW
    ═══════════════════════════════════════════════════════════════════ */
 
-function ResultsView({ result, playerId, gameOver, onPlayAgain, onNextRound, onLeave }) {
+function ResultsView({ result, playerId, isCreator, gameOver, onPlayAgain, onNextRound, onLeave }) {
   const iWon = result.winnerId === playerId;
 
   return (
@@ -502,11 +503,22 @@ function ResultsView({ result, playerId, gameOver, onPlayAgain, onNextRound, onL
             <p className="champion-text">
               ¡{result.scores.find(s => s.score === Math.max(...result.scores.map(x => x.score)))?.name} gana la partida!
             </p>
-            <button className="btn btn-primary" onClick={onPlayAgain}>Jugar de nuevo</button>
+            {isCreator ? (
+              <button className="btn btn-primary" onClick={onPlayAgain}>Jugar de nuevo</button>
+            ) : (
+              <p className="waiting-text">Esperando a que el anfitrión reinicie la partida…</p>
+            )}
             <button className="btn btn-text" onClick={onLeave}>Salir de la sala</button>
           </div>
         ) : (
-          <button className="btn btn-primary" onClick={onNextRound}>Siguiente ronda</button>
+          <div className="game-over-actions">
+            {isCreator ? (
+              <button className="btn btn-primary" onClick={onNextRound}>Siguiente ronda</button>
+            ) : (
+              <p className="waiting-text">Esperando a que el anfitrión inicie la siguiente ronda…</p>
+            )}
+            <button className="btn btn-text" onClick={onLeave}>Salir de la sala</button>
+          </div>
         )}
       </div>
     </div>

@@ -51,6 +51,10 @@ function getPlayerRoom(socketId) {
   return null;
 }
 
+function isCreator(room, socketId) {
+  return room.players[0]?.id === socketId;
+}
+
 function cleanUpRoom(roomId) {
   const room = rooms[roomId];
   if (room && room.players.length === 0) delete rooms[roomId];
@@ -203,6 +207,7 @@ io.on('connection', (socket) => {
   socket.on('game:start', () => {
     const info = getPlayerRoom(socket.id);
     if (!info) return;
+    if (!isCreator(info.room, socket.id)) return;
     startRound(info.roomId);
   });
 
@@ -246,6 +251,7 @@ io.on('connection', (socket) => {
     const info = getPlayerRoom(socket.id);
     if (!info) return;
     const { roomId, room } = info;
+    if (!isCreator(room, socket.id)) return;
     if (!room.game || room.game.state !== 'roundover') return;
     startRound(roomId);
   });
@@ -254,6 +260,7 @@ io.on('connection', (socket) => {
     const info = getPlayerRoom(socket.id);
     if (!info) return;
     const { roomId, room } = info;
+    if (!isCreator(room, socket.id)) return;
     room.players.forEach(p => { p.score = 0; });
     room.game = { state: 'waiting' };
     emitRoomState(roomId);
